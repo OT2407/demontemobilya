@@ -28,12 +28,25 @@ export default function Contact() {
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
 
-    const email = String(formData.get("email") ?? "").trim();
-    const message = String(formData.get("message") ?? "").trim();
     const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
+    const projectType = String(formData.get("projectType") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
 
-    if (!email || !message) {
-      setSubmitError(lang === "tr" ? "Lütfen e-posta ve mesaj alanlarını doldurun." : "Please fill in email and message.");
+    if (!name || !email || !message) {
+      setSubmitError(
+        lang === "tr"
+          ? "Lütfen isim, e-posta ve mesaj alanlarını doldurun."
+          : "Please fill in name, email and message."
+      );
+      return;
+    }
+
+    // simple email format check
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setSubmitError(lang === "tr" ? "Geçerli bir e-posta giriniz." : "Please enter a valid email.");
       return;
     }
 
@@ -44,7 +57,7 @@ export default function Contact() {
       const resp = await fetch("https://formspree.io/f/xjgejqag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message, project: projectRef }),
+        body: JSON.stringify({ name, email, phone, projectType, message, projectRef }),
       });
 
       if (!resp.ok) {
@@ -197,6 +210,29 @@ export default function Contact() {
 
                 <div>
                   <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                    {lang === "tr" ? "Telefon" : "Phone"}
+                  </label>
+                  <input
+                    name="phone"
+                    type="tel"
+                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                    {lang === "tr" ? "Proje Türü" : "Project Type"}
+                  </label>
+                  <input
+                    name="projectType"
+                    type="text"
+                    placeholder={lang === "tr" ? "ör. Konut" : "e.g. Residential"}
+                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
                     {lang === "tr" ? "Mesaj" : "Message"} *
                   </label>
                   <textarea
@@ -207,7 +243,7 @@ export default function Contact() {
                   />
                 </div>
 
-                <input type="hidden" name="project" value={projectRef} />
+                <input type="hidden" name="projectRef" id="projectRef" value={projectRef} />
 
                 {submitError && (
                   <p className="font-sans text-sm text-destructive">{submitError}</p>

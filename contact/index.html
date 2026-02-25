@@ -1,7 +1,22 @@
 <form id="fs-form" action="https://formspree.io/f/xjgejqag" method="POST">
   <label>
+    Full name
+    <input type="text" name="name" required />
+  </label>
+
+  <label>
     Your email
     <input type="email" name="email" required />
+  </label>
+
+  <label>
+    Phone
+    <input type="tel" name="phone" />
+  </label>
+
+  <label>
+    Project type
+    <input type="text" name="projectType" />
   </label>
 
   <label>
@@ -9,7 +24,7 @@
     <textarea name="message" required></textarea>
   </label>
 
-  <input type="hidden" name="project" id="project-field" />
+  <input type="hidden" name="projectRef" id="projectRef" />
 
   <button type="submit">Send Request</button>
 </form>
@@ -25,7 +40,7 @@
 const params = new URLSearchParams(window.location.search);
 const project = params.get("project");
 if (project) {
-  const field = document.getElementById("project-field");
+  const field = document.getElementById("projectRef");
   if (field) field.value = project;
 }
 
