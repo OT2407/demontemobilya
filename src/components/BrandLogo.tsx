@@ -12,45 +12,30 @@ interface BrandLogoProps {
   textClassName?: string;
 }
 
+// All variants and slots now use only the approved circular logo
 const logoSources: Record<BrandLogoVariant, string[]> = {
   light: [
-    "/images/logo/demonte-concept-light.svg",
-    "/images/logo/demonte-concept-light.png",
-    "/images/logo/demonte-concept-logo.svg",
-    "/images/logo/demonte-concept-logo.png",
+    "/images/logo/logo-2.png",
+    "/images/logo/logo-2.webp",
   ],
   dark: [
-    "/images/logo/demonte-concept-dark.svg",
-    "/images/logo/demonte-concept-dark.png",
-    "/images/logo/demonte-concept-logo.svg",
-    "/images/logo/demonte-concept-logo.png",
+    "/images/logo/logo-2.png",
+    "/images/logo/logo-2.webp",
   ],
 };
 
 const slotPrimarySources: Record<BrandLogoSlot, string[]> = {
   nav: [
-    "/images/logo/logo-1.png",
-    "/images/logo/logo-1.webp",
     "/images/logo/logo-2.png",
     "/images/logo/logo-2.webp",
-    "/images/logo/logo-3.png",
-    "/images/logo/logo-3.webp",
   ],
   hero: [
     "/images/logo/logo-2.png",
     "/images/logo/logo-2.webp",
-    "/images/logo/logo-1.png",
-    "/images/logo/logo-1.webp",
-    "/images/logo/logo-3.png",
-    "/images/logo/logo-3.webp",
   ],
   footer: [
     "/images/logo/logo-2.png",
     "/images/logo/logo-2.webp",
-    "/images/logo/logo-1.png",
-    "/images/logo/logo-1.webp",
-    "/images/logo/logo-3.png",
-    "/images/logo/logo-3.webp",
   ],
 };
 
