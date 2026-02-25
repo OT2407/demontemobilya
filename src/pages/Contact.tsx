@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Phone, Mail, MapPin, Clock, MessageCircle, ChevronDown } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useLang } from "@/lib/i18n";
@@ -9,69 +9,31 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [projectType, setProjectType] = useState("");
-  const [referenceProject, setReferenceProject] = useState("");
-  const [referenceImage, setReferenceImage] = useState("");
+  const [projectRef, setProjectRef] = useState("");
   const mapsUrl = "https://maps.google.com/?q=35.212135,33.356079";
   const mapsEmbedUrl = "https://maps.google.com/maps?q=35.212135,33.356079&z=17&output=embed";
   const { t, lang } = useLang();
   const location = useLocation();
   const c = t.contact;
 
+  // capture project query parameter for gallery integration
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const nextReferenceProject = (params.get("reference") ?? "").trim().slice(0, 180);
-    const nextReferenceImageRaw = (params.get("referenceImage") ?? "").trim();
-    const nextReferenceImage = nextReferenceImageRaw.startsWith("/images/gallery/") ? nextReferenceImageRaw : "";
-    setReferenceProject(nextReferenceProject);
-    setReferenceImage(nextReferenceImage);
+    const project = (params.get("project") ?? "").trim().slice(0, 180);
+    setProjectRef(project);
   }, [location.search]);
-
-  useEffect(() => {
-    const hashId = decodeURIComponent(location.hash.replace("#", ""));
-    if (!hashId) {
-      return;
-    }
-
-    if (hashId !== "whatsapp-consultation" && hashId !== "appointment-form") {
-      return;
-    }
-
-    const scrollToTarget = () => {
-      const target = document.getElementById(hashId);
-      if (target) {
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: hashId === "appointment-form" ? "start" : "center",
-        });
-      }
-    };
-
-    scrollToTarget();
-    const timeout = window.setTimeout(scrollToTarget, 120);
-    return () => window.clearTimeout(timeout);
-  }, [location.hash]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formElement = e.currentTarget as HTMLFormElement;
-    const formData = new FormData(formElement);
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
 
-    const payload = {
-      fullName: String(formData.get("fullName") ?? "").trim(),
-      company: String(formData.get("company") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim(),
-      phone: String(formData.get("phone") ?? "").trim(),
-      projectType: String(formData.get("projectType") ?? "").trim(),
-      message: String(formData.get("message") ?? "").trim(),
-      referenceProject,
-      referenceImage,
-    };
+    const email = String(formData.get("email") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
+    const name = String(formData.get("name") ?? "").trim();
 
-    if (!payload.fullName || !payload.email || !payload.message) {
-      setSubmitError(lang === "tr"
-        ? "Lütfen ad soyad, e-posta ve mesaj alanlarını doldurun."
-        : "Please complete full name, email, and message fields.");
+    if (!email || !message) {
+      setSubmitError(lang === "tr" ? "Lütfen e-posta ve mesaj alanlarını doldurun." : "Please fill in email and message.");
       return;
     }
 
@@ -79,27 +41,20 @@ export default function Contact() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/inquiry", {
+      const resp = await fetch("https://formspree.io/f/xjgejqag", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message, project: projectRef }),
       });
 
-      const result = await response.json() as { success?: boolean; error?: string };
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Failed to send inquiry");
+      if (!resp.ok) {
+        throw new Error("Form submission failed");
       }
 
-      formElement.reset();
-      setProjectType("");
       setSent(true);
+      form.reset();
     } catch {
-      setSubmitError(lang === "tr"
-        ? "Talep gönderilemedi. Lütfen daha sonra tekrar deneyin."
-        : "Inquiry could not be sent. Please try again later.");
+      setSubmitError(lang === "tr" ? "Gönderim başarısız oldu." : "Submission failed.");
     } finally {
       setLoading(false);
     }
@@ -202,80 +157,70 @@ export default function Contact() {
             {sent ? (
               <div className="flex flex-col items-start justify-center h-full py-12">
                 <div className="section-divider mb-6" />
-                <h3 className="font-serif text-3xl text-foreground mb-4">{c.receivedHeadline}</h3>
+                <h3 className="font-serif text-3xl text-foreground mb-4">{lang === "tr" ? "Gönderildi" : "Message sent"}</h3>
                 <p className="font-sans text-muted-foreground leading-relaxed">
-                  {c.receivedBody}
+                  {lang === "tr"
+                    ? "Talebiniz alındı. En kısa sürede sizinle iletişime geçeceğiz."
+                    : "Your request has been received. We'll be in touch shortly."}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                <h2 className="font-serif text-2xl text-foreground mb-10">{c.sendHeadline}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.name} *</label>
-                    <input name="fullName" required type="text" className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors" placeholder={c.name} />
-                  </div>
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.company}</label>
-                    <input name="company" type="text" className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors" placeholder={c.companyPlaceholder} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.emailLabel} *</label>
-                    <input name="email" required type="email" className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors" placeholder="your@email.com" />
-                  </div>
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.phone}</label>
-                    <input name="phone" type="tel" className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors" placeholder={c.phonePlaceholder} />
-                  </div>
-                </div>
+                <h2 className="font-serif text-2xl text-foreground mb-10">
+                  {lang === "tr" ? "İletişim Formu" : "Contact Form"}
+                </h2>
+
                 <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.projectType}</label>
-                  <div className="relative">
-                    <select
-                      value={projectType}
-                      onChange={(e) => setProjectType(e.target.value)}
-                      name="projectType"
-                      className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors appearance-none cursor-pointer"
-                    >
-                      <option value="">{c.selectType}</option>
-                      {c.projectTypes.map((type) => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  </div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                    {lang === "tr" ? "İsim" : "Name"} *
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    type="text"
+                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                  />
                 </div>
+
                 <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">{c.message} *</label>
-                  <textarea name="message" required rows={5} className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors resize-none" placeholder={c.messagePlaceholder} />
+                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                    {lang === "tr" ? "E-posta" : "Email"} *
+                  </label>
+                  <input
+                    name="email"
+                    required
+                    type="email"
+                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                    placeholder="your@email.com"
+                  />
                 </div>
-                {referenceProject ? (
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
-                      {lang === "tr" ? "Seçilen Referans" : "Selected Reference"}
-                    </label>
-                    <div className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground">
-                      {referenceProject}
-                    </div>
-                    {referenceImage ? (
-                      <div className="mt-3 w-20 aspect-[4/5] overflow-hidden rounded-lg border border-border">
-                        <img
-                          src={referenceImage}
-                          alt={lang === "tr" ? "Seçilen referans görseli" : "Selected reference image"}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                {submitError ? (
+
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
+                    {lang === "tr" ? "Mesaj" : "Message"} *
+                  </label>
+                  <textarea
+                    name="message"
+                    required
+                    rows={5}
+                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors resize-none"
+                  />
+                </div>
+
+                <input type="hidden" name="project" value={projectRef} />
+
+                {submitError && (
                   <p className="font-sans text-sm text-destructive">{submitError}</p>
-                ) : null}
-                <button type="submit" disabled={loading} className="btn-dark-luxury disabled:opacity-50">
-                  {loading ? c.sending : c.send}
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-dark-luxury disabled:opacity-50"
+                >
+                  {loading
+                    ? lang === "tr" ? "Gönderiliyor..." : "Sending..."
+                    : lang === "tr" ? "Gönder" : "Send"}
                 </button>
               </form>
             )}

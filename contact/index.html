@@ -1,38 +1,57 @@
-<form id='requestForm'>
-  <label>Name</label>
-  <input type='text' name='name' required />
+<form id="fs-form" action="https://formspree.io/f/xjgejqag" method="POST">
+  <label>
+    Your email
+    <input type="email" name="email" required />
+  </label>
 
-  <label>Email</label>
-  <input type='email' name='email' required />
+  <label>
+    Message / Request
+    <textarea name="message" required></textarea>
+  </label>
 
-  <label>Phone</label>
-  <input type='tel' name='phone' />
+  <input type="hidden" name="project" id="project-field" />
 
-  <label>Project Details</label>
-  <textarea name='details' required></textarea>
-
-  <button type='submit'>Submit Request</button>
+  <button type="submit">Send Request</button>
 </form>
 
+<div id="fs-success" style="display:none; margin-top:1rem; color:green;">
+  Thank you! Your request has been sent.
+</div>
+<div id="fs-error" style="display:none; margin-top:1rem; color:red;">
+  Oops! Something went wrong. Please try again later.
+</div>
+
 <script>
-document.getElementById('requestForm').addEventListener('submit', async function(e) {
+const params = new URLSearchParams(window.location.search);
+const project = params.get("project");
+if (project) {
+  const field = document.getElementById("project-field");
+  if (field) field.value = project;
+}
+
+const form = document.getElementById('fs-form');
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
+  const statusSuccess = document.getElementById('fs-success');
+  const statusError = document.getElementById('fs-error');
+  statusSuccess.style.display = 'none';
+  statusError.style.display = 'none';
 
-  const data = {
-    name: this.name.value,
-    email: this.email.value,
-    phone: this.phone.value,
-    details: this.details.value
-  };
-
-  // Send email via form backend or email service
-  await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-
-  alert('Request submitted. We will contact you soon.');
-  this.reset();
+  const data = new FormData(form);
+  try {
+    const resp = await fetch(form.action, {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    });
+    if (resp.ok) {
+      statusSuccess.style.display = 'block';
+      form.reset();
+    } else {
+      throw new Error('Network response was not ok.');
+    }
+  } catch (err) {
+    statusError.style.display = 'block';
+  }
 });
 </script>
