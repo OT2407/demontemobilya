@@ -1,0 +1,38 @@
+<form id='requestForm'>
+  <label>Name</label>
+  <input type='text' name='name' required />
+
+  <label>Email</label>
+  <input type='email' name='email' required />
+
+  <label>Phone</label>
+  <input type='tel' name='phone' />
+
+  <label>Project Details</label>
+  <textarea name='details' required></textarea>
+
+  <button type='submit'>Submit Request</button>
+</form>
+
+<script>
+document.getElementById('requestForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const data = {
+    name: this.name.value,
+    email: this.email.value,
+    phone: this.phone.value,
+    details: this.details.value
+  };
+
+  // Send email via form backend or email service
+  await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  alert('Request submitted. We will contact you soon.');
+  this.reset();
+});
+</script>
