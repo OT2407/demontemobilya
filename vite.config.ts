@@ -20,5 +20,5 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "docs",
   },
-  base: "/demontemobilya/",
+  base: "/",
 }));
