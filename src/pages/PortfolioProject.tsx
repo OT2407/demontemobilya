@@ -104,7 +104,7 @@ export default function PortfolioProject() {
   );
 
   const project = projectIndex >= 0 ? t.portfolio.projects[projectIndex] : null;
-  const projectSlug = projectIndex >= 0 ? toProjectSlug(translations.en.portfolio.projects[projectIndex].title) : "";
+  const projectSlug = projectIndex >= 0 ? toProjectSlug(translations.en.portfolio.projects[projectIndex]?.title ?? "") : "";
   const projectImages = projectSlug ? (manifest[projectSlug] ?? EMPTY_IMAGES) : EMPTY_IMAGES;
 
   useEffect(() => {

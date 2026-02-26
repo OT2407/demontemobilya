@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import heroVideo from "@/assets/hero-video.mp4";
 import { translations, useLang } from "@/lib/i18n";
 
@@ -37,7 +37,9 @@ const shuffleImages = (images: string[]) => {
   const shuffled = [...images];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const temp = shuffled[i] ?? "";
+    shuffled[i] = shuffled[j] ?? "";
+    shuffled[j] = temp;
   }
   return shuffled;
 };
@@ -56,24 +58,16 @@ const getHomeGalleryPreviewImages = (images: string[]) => {
   const padded = [...preview];
   let index = 0;
   while (padded.length < HOME_GALLERY_PREVIEW_COUNT) {
-    padded.push(preview[index % preview.length]);
+    const previewItem = preview[index % preview.length];
+    if (previewItem) {
+      padded.push(previewItem);
+    }
     index += 1;
   }
 
   return padded;
 };
 
-const getReferenceNameFromImage = (image: string) => {
-  const filename = image.split("/").pop() || image;
-  return decodeURIComponent(filename).replace(/\.[^.]+$/, "");
-};
-
-const getContactReferenceSearch = (image: string) => {
-  const params = new URLSearchParams();
-  params.set("reference", getReferenceNameFromImage(image));
-  params.set("referenceImage", image);
-  return `?${params.toString()}`;
-};
 
 export default function Index() {
   const { t, lang } = useLang();
@@ -490,16 +484,6 @@ export default function Index() {
     galleryDragStateRef.current.moved = false;
   };
 
-  // Navigation state management for browser back button
-  const handlePortfolioLinkClick = useCallback((slug: string) => {
-    const state = { from: "home", scrollX: marqueeOffsetRef.current };
-    history.replaceState(state, "", window.location.href);
-  }, []);
-
-  const handleGalleryLinkClick = useCallback(() => {
-    const state = { from: "home", scrollY: galleryMarqueeOffsetRef.current };
-    history.replaceState(state, "", window.location.href);
-  }, []);
 
   return (
     <main className="bg-background">

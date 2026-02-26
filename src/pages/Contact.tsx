@@ -35,7 +35,7 @@ export default function Contact() {
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
 
-    const name = String(formData.get("name") ?? "").trim();
+    // const _name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const phone = String(formData.get("phone") ?? "").trim();
     const projectType = String(formData.get("projectType") ?? "").trim();
