@@ -52,6 +52,29 @@ form.addEventListener('submit', async function(e) {
   statusSuccess.style.display = 'none';
   statusError.style.display = 'none';
 
+  // basic inline validation
+  const email = form.querySelector('[name=email]');
+  const phone = form.querySelector('[name=phone]');
+  let valid = true;
+  if (email) {
+    const emailVal = email.value.trim();
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!pattern.test(emailVal)) {
+      statusError.textContent = 'Please enter a valid email.';
+      statusError.style.display = 'block';
+      valid = false;
+    }
+  }
+  if (phone && phone.value.trim()) {
+    const digits = phone.value.replace(/\D/g, '');
+    if (digits.length < 7) {
+      statusError.textContent = 'Please enter a valid phone number.';
+      statusError.style.display = 'block';
+      valid = false;
+    }
+  }
+  if (!valid) return;
+
   const data = new FormData(form);
   try {
     const resp = await fetch(form.action, {

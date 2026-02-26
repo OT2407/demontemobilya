@@ -9,18 +9,25 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [projectRef, setProjectRef] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [projectParam, setProjectParam] = useState("");
+  const [projectImageUrl, setProjectImageUrl] = useState("");
   const mapsUrl = "https://maps.google.com/?q=35.212135,33.356079";
   const mapsEmbedUrl = "https://maps.google.com/maps?q=35.212135,33.356079&z=17&output=embed";
   const { t, lang } = useLang();
   const location = useLocation();
   const c = t.contact;
 
-  // capture project query parameter for gallery integration
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const project = (params.get("project") ?? "").trim().slice(0, 180);
-    setProjectRef(project);
+    const project = (params.get("project") ?? "").trim().slice(0, 300);
+    setProjectParam(project);
+    if (project && /\.(jpe?g|png|webp|gif|avif)$/i.test(project)) {
+      setProjectImageUrl(project);
+    } else {
+      setProjectImageUrl("");
+    }
   }, [location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,40 +41,76 @@ export default function Contact() {
     const projectType = String(formData.get("projectType") ?? "").trim();
     const message = String(formData.get("message") ?? "").trim();
 
-    if (!name || !email || !message) {
-      setSubmitError(
-        lang === "tr"
-          ? "Lütfen isim, e-posta ve mesaj alanlarını doldurun."
-          : "Please fill in name, email and message."
-      );
-      return;
-    }
-
-    // simple email format check
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      setSubmitError(lang === "tr" ? "Geçerli bir e-posta giriniz." : "Please enter a valid email.");
-      return;
-    }
-
+    setEmailError("");
+    setPhoneError("");
     setSubmitError("");
+
+    let valid = true;
+
+    // Enhanced email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setEmailError(lang === "tr" ? "E-posta adresi gereklidir." : "Email address is required.");
+      valid = false;
+    } else if (!emailPattern.test(email)) {
+      setEmailError(lang === "tr" ? "Geçerli bir e-posta adresi giriniz." : "Please enter a valid email address.");
+      valid = false;
+    } else if (email.length > 254) {
+      setEmailError(lang === "tr" ? "E-posta adresi çok uzun." : "Email address is too long.");
+      valid = false;
+    }
+
+    // Enhanced phone validation
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phone && phoneDigits.length < 7) {
+      setPhoneError(lang === "tr" ? "Geçerli bir telefon numarası giriniz (en az 7 rakam)." : "Please enter a valid phone number (minimum 7 digits).");
+      valid = false;
+    } else if (phone && phoneDigits.length > 15) {
+      setPhoneError(lang === "tr" ? "Telefon numarası çok uzun." : "Phone number is too long.");
+      valid = false;
+    }
+
+    // Enhanced message validation
+    if (message && message.length > 1000) {
+      setSubmitError(lang === "tr" ? "Mesaj çok uzun. Lütfen 1000 karakterden az yazınız." : "Message is too long. Please keep it under 1000 characters.");
+      valid = false;
+    }
+
+    // Enhanced project type validation
+    if (projectType && projectType.length > 100) {
+      setSubmitError(lang === "tr" ? "Proje tipi çok uzun." : "Project type is too long.");
+      valid = false;
+    }
+
+    if (!valid) return;
+
     setLoading(true);
 
     try {
-      const resp = await fetch("https://formspree.io/f/xjgejqag", {
+      // Use the native form submission instead of fetch
+      const response = await fetch(form.action, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, projectType, message, projectRef }),
+        body: formData,
+        headers: {
+          "Accept": "application/json"
+        }
       });
 
-      if (!resp.ok) {
+      if (!response.ok) {
         throw new Error("Form submission failed");
       }
 
       setSent(true);
       form.reset();
-    } catch {
-      setSubmitError(lang === "tr" ? "Gönderim başarısız oldu." : "Submission failed.");
+      setEmailError("");
+      setPhoneError("");
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setSubmitError(
+        lang === "tr"
+          ? "Bir hata oluştu. Lütfen tekrar deneyin veya bizi doğrudan arayın."
+          : "Something went wrong. Please try again or contact us directly."
+      );
     } finally {
       setLoading(false);
     }
@@ -141,7 +184,6 @@ export default function Contact() {
               </div>
             </div>
 
-            {/* Google Maps Embed */}
             <div className="mt-12">
               <a
                 href={mapsUrl}
@@ -170,28 +212,49 @@ export default function Contact() {
             {sent ? (
               <div className="flex flex-col items-start justify-center h-full py-12">
                 <div className="section-divider mb-6" />
-                <h3 className="font-serif text-3xl text-foreground mb-4">{lang === "tr" ? "Gönderildi" : "Message sent"}</h3>
+                <h3 className="font-serif text-3xl text-foreground mb-4">
+                  {lang === "tr" ? "Gönderim başarılı" : "Submission successful"}
+                </h3>
                 <p className="font-sans text-muted-foreground leading-relaxed">
                   {lang === "tr"
-                    ? "Talebiniz alındı. En kısa sürede sizinle iletişime geçeceğiz."
-                    : "Your request has been received. We'll be in touch shortly."}
+                    ? "Bir ekip arkadaşımız 24 saat içinde sizinle iletişime geçecektir."
+                    : "A member of our team will reach out within 24 hours."}
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form action="https://formspree.io/f/xjgejqag" method="POST" onSubmit={handleSubmit} noValidate className="space-y-6">
                 <h2 className="font-serif text-2xl text-foreground mb-10">
                   {lang === "tr" ? "İletişim Formu" : "Contact Form"}
                 </h2>
 
+                {/* Gallery → Contact: image preview only, no filename */}
+                {projectImageUrl && (
+                  <div className="mb-2">
+                    <p className="font-sans text-[0.65rem] tracking-widest uppercase text-muted-foreground mb-3">
+                      {lang === "tr" ? "Seçilen Görsel" : "Selected Image"}
+                    </p>
+                    <div className="overflow-hidden rounded-lg border border-border">
+                      <img
+                        src={projectImageUrl}
+                        alt={lang === "tr" ? "Seçilen proje görseli" : "Selected project image"}
+                        className="w-full max-h-52 object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <input type="hidden" name="project" value={projectParam} />
+
                 <div>
                   <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
-                    {lang === "tr" ? "İsim" : "Name"} *
+                    {lang === "tr" ? "İsim" : "Name"}
                   </label>
                   <input
                     name="name"
-                    required
                     type="text"
+                    required
                     className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                    placeholder={lang === "tr" ? "Adınız Soyadınız" : "Your Full Name"}
                   />
                 </div>
 
@@ -201,11 +264,16 @@ export default function Contact() {
                   </label>
                   <input
                     name="email"
-                    required
                     type="email"
-                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                    required
+                    className={`w-full bg-card border px-4 py-3 font-sans text-sm text-foreground focus:outline-none transition-colors ${
+                      emailError ? "border-destructive" : "border-border focus:border-gold"
+                    }`}
                     placeholder="your@email.com"
                   />
+                  {emailError && (
+                    <p className="font-sans text-xs text-destructive mt-2">{emailError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -215,8 +283,14 @@ export default function Contact() {
                   <input
                     name="phone"
                     type="tel"
-                    className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                    className={`w-full bg-card border px-4 py-3 font-sans text-sm text-foreground focus:outline-none transition-colors ${
+                      phoneError ? "border-destructive" : "border-border focus:border-gold"
+                    }`}
+                    placeholder={lang === "tr" ? "+90 5XX XXX XX XX" : "+90 5XX XXX XX XX"}
                   />
+                  {phoneError && (
+                    <p className="font-sans text-xs text-destructive mt-2">{phoneError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -226,24 +300,23 @@ export default function Contact() {
                   <input
                     name="projectType"
                     type="text"
-                    placeholder={lang === "tr" ? "ör. Konut" : "e.g. Residential"}
                     className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors"
+                    placeholder={lang === "tr" ? "ör. Konut, Ticari, Otelcilik" : "e.g. Residential, Commercial, Hospitality"}
                   />
                 </div>
 
                 <div>
                   <label className="block font-sans text-xs tracking-widest uppercase text-muted-foreground mb-3">
-                    {lang === "tr" ? "Mesaj" : "Message"} *
+                    {lang === "tr" ? "Mesaj" : "Message"}
                   </label>
                   <textarea
                     name="message"
-                    required
                     rows={5}
+                    required
                     className="w-full bg-card border border-border px-4 py-3 font-sans text-sm text-foreground focus:outline-none focus:border-gold transition-colors resize-none"
+                    placeholder={lang === "tr" ? "Projeniz hakkında bize bilgi verin..." : "Tell us about your project..."}
                   />
                 </div>
-
-                <input type="hidden" name="projectRef" id="projectRef" value={projectRef} />
 
                 {submitError && (
                   <p className="font-sans text-sm text-destructive">{submitError}</p>
@@ -252,11 +325,11 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-dark-luxury disabled:opacity-50"
+                  className="btn-dark-luxury disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading
-                    ? lang === "tr" ? "Gönderiliyor..." : "Sending..."
-                    : lang === "tr" ? "Gönder" : "Send"}
+                    ? (lang === "tr" ? "Gönderiliyor..." : "Sending...")
+                    : (lang === "tr" ? "Gönder" : "Send")}
                 </button>
               </form>
             )}

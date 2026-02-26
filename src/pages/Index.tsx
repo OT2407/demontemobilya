@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import heroVideo from "@/assets/hero-video.mp4";
 import { translations, useLang } from "@/lib/i18n";
+
 const EMPTY_IMAGES: string[] = [];
 
 const toProjectSlug = (title: string) =>
@@ -22,6 +23,7 @@ const toProjectSlug = (title: string) =>
 const HOME_DRAG_FRICTION = 0.4;
 const HOME_AUTO_SCROLL_SPEED = 22;
 const HOME_GALLERY_PREVIEW_COUNT = 8;
+
 const hashString = (value: string) => {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) {
@@ -62,7 +64,7 @@ const getHomeGalleryPreviewImages = (images: string[]) => {
 };
 
 const getReferenceNameFromImage = (image: string) => {
-  const filename = image.split("/").pop() ?? image;
+  const filename = image.split("/").pop() || image;
   return decodeURIComponent(filename).replace(/\.[^.]+$/, "");
 };
 
@@ -352,6 +354,22 @@ export default function Index() {
     applyMarqueeTransform();
   };
 
+  const handlePortfolioMouseEnter = () => {
+    if (!hasPortfolioFrames || projectFrames.length === 0) {
+      return;
+    }
+    // Stop auto-scrolling when hovering
+    marqueeVelocityRef.current = 0;
+  };
+
+  const handlePortfolioMouseLeave = () => {
+    if (!hasPortfolioFrames || projectFrames.length === 0) {
+      return;
+    }
+    // Resume auto-scrolling when not hovering
+    marqueeVelocityRef.current = -HOME_AUTO_SCROLL_SPEED;
+  };
+
   const handlePortfolioPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!hasPortfolioFrames || event.pointerType !== "mouse" || projectFrames.length === 0) {
       return;
@@ -406,6 +424,22 @@ export default function Index() {
     applyGalleryMarqueeTransform();
   };
 
+  const handleGalleryMouseEnter = () => {
+    if (!hasGalleryFrames || galleryPreviewImages.length === 0) {
+      return;
+    }
+    // Stop auto-scrolling when hovering
+    galleryMarqueeVelocityRef.current = 0;
+  };
+
+  const handleGalleryMouseLeave = () => {
+    if (!hasGalleryFrames || galleryPreviewImages.length === 0) {
+      return;
+    }
+    // Resume auto-scrolling when not hovering
+    galleryMarqueeVelocityRef.current = -HOME_AUTO_SCROLL_SPEED;
+  };
+
   const handleGalleryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!hasGalleryFrames || event.pointerType !== "mouse" || galleryPreviewImages.length === 0) {
       return;
@@ -456,10 +490,21 @@ export default function Index() {
     galleryDragStateRef.current.moved = false;
   };
 
+  // Navigation state management for browser back button
+  const handlePortfolioLinkClick = useCallback((slug: string) => {
+    const state = { from: "home", scrollX: marqueeOffsetRef.current };
+    history.replaceState(state, "", window.location.href);
+  }, []);
+
+  const handleGalleryLinkClick = useCallback(() => {
+    const state = { from: "home", scrollY: galleryMarqueeOffsetRef.current };
+    history.replaceState(state, "", window.location.href);
+  }, []);
+
   return (
     <main className="bg-background">
       {/* ── Hero – Full-screen video ──────────────────────── */}
-      <section className="hero-fixed-theme home-hero relative h-screen min-h-[780px] flex items-center justify-center overflow-hidden">
+      <section className="hero-fixed-theme home-hero relative h-screen md:min-h-[780px] lg:min-h-[900px] xl:min-h-[950px] flex items-center justify-center overflow-hidden">
         <div className="home-hero-base absolute inset-0" />
         {heroImages.length > 0 ? (
           <div className="absolute inset-0">
@@ -469,6 +514,7 @@ export default function Index() {
                 src={image}
                 alt=""
                 aria-hidden="true"
+                loading="eager"
                 className="home-hero-image absolute inset-0 w-full h-full object-cover"
                 style={{
                   opacity: index === activeHeroImage ? "var(--home-hero-image-opacity, 0.48)" : 0,
@@ -476,7 +522,8 @@ export default function Index() {
                   filter: index === activeHeroImage
                     ? "brightness(var(--home-hero-brightness, 0.72)) saturate(var(--home-hero-saturation, 0.82))"
                     : "brightness(var(--home-hero-brightness, 0.72)) saturate(var(--home-hero-saturation, 0.82))",
-                  transition: "opacity 1200ms ease, transform 7000ms linear",
+                  transition: "opacity 1500ms cubic-bezier(0.4, 0, 0.2, 1), transform 8000ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  willChange: "opacity, transform",
                 }}
               />
             ))}
@@ -495,29 +542,26 @@ export default function Index() {
         <div className="home-hero-overlay absolute inset-0" />
 
         <div className="relative z-10 text-center px-8">
-          <div className="mb-6 animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            <span className="home-hero-brand font-serif text-6xl md:text-8xl text-cream tracking-[0.12em] uppercase whitespace-nowrap">
+          <div className="mb-6">
+            <span className="home-hero-brand font-serif text-5xl md:text-7xl lg:text-8xl text-cream tracking-[0.12em] uppercase whitespace-nowrap">
               Demonte Concept
             </span>
           </div>
 
           <h1
-            className="home-hero-headline font-serif text-cream/90 text-3xl md:text-5xl leading-tight mb-4 animate-fade-up"
-            style={{ animationDelay: "0.4s" }}
+            className="home-hero-headline font-serif text-cream/90 text-3xl md:text-4xl lg:text-5xl leading-tight mb-4"
           >
             {i18n.headline}
           </h1>
 
           <p
-            className="home-hero-subline font-sans text-cream/60 text-sm md:text-base tracking-widest uppercase mb-12 animate-fade-up"
-            style={{ animationDelay: "0.6s" }}
+            className="home-hero-subline font-sans text-cream/60 text-sm md:text-base lg:text-lg tracking-widest uppercase mb-12"
           >
             {i18n.subline}
           </p>
 
           <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up"
-            style={{ animationDelay: "0.8s" }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link to="/portfolio" className="btn-primary-luxury">
               {i18n.cta1}
@@ -735,6 +779,8 @@ export default function Index() {
             onPointerUp={handlePortfolioPointerEnd}
             onPointerCancel={handlePortfolioPointerEnd}
             onPointerLeave={handlePortfolioPointerEnd}
+            onMouseEnter={handlePortfolioMouseEnter}
+            onMouseLeave={handlePortfolioMouseLeave}
           >
             <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-cream-dark to-transparent z-10" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-cream-dark to-transparent z-10" />
@@ -749,9 +795,9 @@ export default function Index() {
                     const activeImage = project.coverImage || project.images[0];
                     return (
                     <Link
-                      to="/portfolio"
+                      to={`/portfolio/${project.slug}`}
                       key={`${project.slug}-${idx}`}
-                      className="project-card frame-lift group block shrink-0 w-[78vw] sm:w-[46vw] lg:w-[30vw] max-w-[420px] min-w-[260px]"
+                      className="project-card frame-lift group block shrink-0 w-[78vw] sm:w-[46vw] lg:w-[30vw] max-w-[420px] min-w-[260px] cursor-pointer"
                     >
                       <div className="aspect-[4/5] overflow-hidden relative">
                         <img
@@ -759,7 +805,7 @@ export default function Index() {
                           src={activeImage}
                           alt={project.title}
                           loading="lazy"
-                          className="absolute inset-0 w-full h-full object-cover"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="frame-caption-layer">
                           <div className="frame-caption-content">
@@ -820,6 +866,8 @@ export default function Index() {
                 onPointerCancel={handleGalleryPointerEnd}
                 onPointerLeave={handleGalleryPointerEnd}
                 onClickCapture={handleGalleryClickCapture}
+                onMouseEnter={handleGalleryMouseEnter}
+                onMouseLeave={handleGalleryMouseLeave}
               >
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white to-transparent z-10" />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent z-10" />
@@ -832,30 +880,26 @@ export default function Index() {
                     {galleryMarqueeImages.map((image, idx) => (
                       <Link
                         key={`${image}-${idx}`}
-                        to={{
-                          pathname: "/contact",
-                          search: getContactReferenceSearch(image),
-                          hash: "#appointment-form",
-                        }}
+                        to="/gallery"
                         className="group block"
                       >
-                        <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-border relative">
-                          <img
-                            src={image}
-                            alt={language === "TR" ? "Galeri Görseli" : "Gallery Image"}
-                            loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute left-4 right-4 bottom-4 flex items-center justify-between opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
-                            <span className="font-sans text-[0.58rem] tracking-widest uppercase text-cream">
-                              {language === "TR" ? "Randevu Oluştur" : "Book Appointment"}
-                            </span>
-                            <span className="w-8 h-8 rounded-full border border-gold/70 bg-charcoal/70 text-gold inline-flex items-center justify-center">
-                              <ArrowRight size={14} />
-                            </span>
-                          </div>
+                      <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-border relative">
+                        <img
+                          src={image}
+                          alt={language === "TR" ? "Galeri Görseli" : "Gallery Image"}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-charcoal/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute left-4 right-4 bottom-4 flex items-center justify-between opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+                          <span className="font-sans text-[0.58rem] tracking-widest uppercase text-cream">
+                            {language === "TR" ? "Tüm Galeriyi Aç" : "Open Full Gallery"}
+                          </span>
+                          <span className="w-8 h-8 rounded-full border border-gold/70 bg-charcoal/70 text-gold inline-flex items-center justify-center">
+                            <ArrowRight size={14} />
+                          </span>
                         </div>
+                      </div>
                       </Link>
                     ))}
                   </div>

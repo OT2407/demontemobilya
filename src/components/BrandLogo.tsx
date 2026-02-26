@@ -7,6 +7,7 @@ type BrandLogoSlot = "nav" | "hero" | "footer";
 interface BrandLogoProps {
   variant?: BrandLogoVariant;
   slot?: BrandLogoSlot;
+  logoType?: "logo-1" | "logo-2";
   className?: string;
   imgClassName?: string;
   textClassName?: string;
@@ -42,6 +43,7 @@ const slotPrimarySources: Record<BrandLogoSlot, string[]> = {
 export default function BrandLogo({
   variant = "dark",
   slot,
+  logoType = "logo-1",
   className,
   imgClassName,
   textClassName,
@@ -58,16 +60,17 @@ export default function BrandLogo({
 
   const activeSource = sources[sourceIndex];
   const isLight = variant === "light";
+  const logoSrc = logoType === "logo-2" ? "/images/logo/logo-2.png" : "/images/logo/logo-1.png";
 
   return (
     <div className={cn("leading-none", className)}>
       {activeSource ? (
-        <img
-          src={activeSource}
-          alt="Demonte Concept"
-          className={cn("object-contain", imgClassName)}
-          onError={() => setSourceIndex((prev) => prev + 1)}
-        />
+      <img
+        src={logoSrc}
+        alt="Demonte Concept Logo"
+        className={imgClassName}
+        loading="lazy"
+      />
       ) : (
         <span
           className={cn(

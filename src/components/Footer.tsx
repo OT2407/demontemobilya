@@ -28,6 +28,7 @@ export default function Footer() {
             <BrandLogo
               variant="light"
               slot="footer"
+              logoType="logo-2"
               imgClassName="footer-logo-adaptive h-24 md:h-28 w-auto"
               textClassName="text-2xl tracking-wide"
             />

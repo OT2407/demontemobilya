@@ -324,6 +324,18 @@
     background-color: hsl(var(--charcoal));
   }
 
+  /* hero image positioning tweaks */
+  .home-hero-image,
+  .home-hero-video {
+    object-position: center center;
+  }
+  @media (max-width: 480px) {
+    .home-hero-image,
+    .home-hero-video {
+      object-position: top center;
+    }
+  }
+
   .border-gold {
     border-color: hsl(var(--gold));
   }

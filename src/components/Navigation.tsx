@@ -86,32 +86,37 @@ export default function Navigation() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navBg}`}
       >
-        <div className="w-full pl-0 pr-8 md:pr-10 flex items-center justify-between h-20">
+        <div className="w-full pl-6 pr-8 md:pl-6 md:pr-10 flex items-center justify-between h-20">
           <Link to="/" className="inline-flex items-center">
             <BrandLogo
               variant="light"
               slot="nav"
-              imgClassName="nav-logo-adaptive h-[10.5rem] md:h-[12.25rem] w-auto"
+              imgClassName="nav-logo-adaptive h-[11.2rem] md:h-[12.8rem] w-auto"
               textClassName="text-xl tracking-wide"
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-4">
+          <nav className="hidden lg:flex items-center gap-6">
             <div ref={pagesMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setPagesOpen((prev) => !prev)}
-                className={`header-action-btn ${headerButtonToneClass} inline-flex items-center justify-center w-10 h-10`}
+                className={`header-action-btn ${headerButtonToneClass} inline-flex items-center justify-center w-12 h-12`}
                 aria-label={lang === "tr" ? "Sayfa menüsü" : "Pages menu"}
+                aria-expanded={pagesOpen}
+                aria-haspopup="true"
+                aria-controls="pages-menu"
               >
-                {pagesOpen ? <X size={16} /> : <Menu size={16} />}
+                {pagesOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               {pagesOpen ? (
-                <div className={`absolute right-0 mt-2 min-w-[200px] backdrop-blur-sm py-2 ${
-                  isLightTheme
-                    ? "border border-border bg-card/95"
-                    : "border border-cream/20 bg-charcoal/95"
-                }`}
+                <div 
+                  id="pages-menu"
+                  className={`absolute right-0 mt-2 min-w-[200px] backdrop-blur-sm py-2 ${
+                    isLightTheme
+                      ? "border border-border bg-card/95"
+                      : "border border-cream/20 bg-charcoal/95"
+                  }`}
                 >
                   {pageItems.map((item) => (
                     <Link

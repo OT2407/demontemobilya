@@ -108,7 +108,7 @@ export default function Gallery() {
                   }}
                   className="group block"
                 >
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-border relative">
+                  <div className="aspect-[4/5] overflow-hidden rounded-2xl border border-border relative group-hover:shadow-lg transition-shadow duration-300">
                     <img
                       src={image}
                       alt={lang === "tr" ? `Galeri Görseli ${idx + 1}` : `Gallery Image ${idx + 1}`}
