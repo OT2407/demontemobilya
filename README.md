@@ -20,3 +20,4 @@ npm run preview
 
 - Build command: `npm run build`
 - Output directory: `dist`
+- API route: `/api/inquiry` (Vercel serverless function)
